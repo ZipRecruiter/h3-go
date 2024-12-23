@@ -1,5 +1,7 @@
 package h3
 
+import "fmt"
+
 // CellSet represents a set of H3 cells.
 type CellSet map[Cell]struct{}
 
@@ -7,9 +9,9 @@ type CellSet map[Cell]struct{}
 func NewCellSetFromStrings(ss []string) (CellSet, error) {
 	cs := make(CellSet, len(ss))
 	for _, s := range ss {
-		return nil, fmt.Errorf("error converting string %s to cell: %w", s, err)
+		c, err := NewCellFromString(s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error converting string %s to cell: %w", s, err)
 		}
 		cs[c] = struct{}{}
 	}
