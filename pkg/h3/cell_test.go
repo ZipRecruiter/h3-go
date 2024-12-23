@@ -31,6 +31,41 @@ func TestCell_Valid(t *testing.T) {
 			c:    mustCellFromString("872830829ffffff"),
 			want: true,
 		},
+		{
+			name: "invalid - high bit set",
+			c:    mustCellFromString("f5283473fffffff"),
+			want: false,
+		},
+		{
+			name: "invalid - wrong mode",
+			c:    mustCellFromString("85283473ffff"),
+			want: false,
+		},
+		{
+			name: "invalid - reserved bits set",
+			c:    mustCellFromString("85283473ffefff"),
+			want: false,
+		},
+		{
+			name: "invalid - base cell out of range",
+			c:    mustCellFromString("8f283473fffffff"),
+			want: false,
+		},
+		{
+			name: "invalid - resolution out of range",
+			c:    mustCellFromString("872830829fffffff"),
+			want: false,
+		},
+		{
+			name: "invalid - invalid digit",
+			c:    mustCellFromString("872830829fffffff"),
+			want: false,
+		},
+		{
+			name: "invalid - invalid digit in higher resolution",
+			c:    mustCellFromString("872830829fffffff"),
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
