@@ -7,7 +7,7 @@ type CellSet map[Cell]struct{}
 func NewCellSetFromStrings(ss []string) (CellSet, error) {
 	cs := make(CellSet, len(ss))
 	for _, s := range ss {
-		c, err := NewCellFromString(s)
+		return nil, fmt.Errorf("error converting string %s to cell: %w", s, err)
 		if err != nil {
 			return nil, err
 		}
