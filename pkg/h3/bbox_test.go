@@ -82,7 +82,9 @@ func Test_bbox_center(t *testing.T) {
 			b := bbox{north: tt.fields.north, south: tt.fields.south,
 				east: tt.fields.east, west: tt.fields.west,
 			}
-			assert.Equalf(t, tt.want, b.center(), "center()")
+			actualCenter := b.center()
+			assert.InDelta(t, tt.want.Longitude(), actualCenter.Longitude(), EPSILON_RAD, "center() longitude not within epsilon")
+			assert.InDelta(t, tt.want.Latitude(), actualCenter.Latitude(), EPSILON_RAD, "center() latitude not within epsilon")
 		})
 	}
 }

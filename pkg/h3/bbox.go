@@ -33,7 +33,7 @@ func (b bbox) center() LatLng {
 	}
 
 	return LatLng{
-		b.north + b.south*0.5,
+		(b.north + b.south) * 0.5,
 		constrainLng((east + b.west) * 0.5),
 	}
 }
