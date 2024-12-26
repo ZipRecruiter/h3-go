@@ -46,12 +46,6 @@ func rad2deg(rad float64) float64 {
 	return (rad * 180.0) / math.Pi
 }
 
-// toFaceIJK returns the corresponding icosahedral face and containing 2D hex
-// coordinates relative to that face center.
-func (l LatLng) toFaceIJK(res int) faceIJK {
-	return geoToFaceIJK(l, res)
-}
-
 // posAngleRads normalizes radians to a value between 0.0 and two*PI.
 func posAngleRads(rads float64) float64 {
 	tmp := rads
