@@ -518,7 +518,7 @@ func Test_bbox_scale(t *testing.T) {
 		{
 			name:   "clamp east negative",
 			fields: fields{north: 1.5, south: -0.5, east: -math.Pi + 0.4, west: math.Pi - 1.6},
-			args:   args{factor: 2},
+			args:   args{factor: 0.5},
 			want:   bbox{north: 1.0, south: 0.0, east: math.Pi - 0.1, west: math.Pi - 1.1},
 		},
 		{
@@ -539,7 +539,11 @@ func Test_bbox_scale(t *testing.T) {
 			b := bbox{north: tt.fields.north, south: tt.fields.south,
 				east: tt.fields.east, west: tt.fields.west,
 			}
-			assert.Equalf(t, tt.want, b.scale(tt.args.factor), "scale(%v)", tt.args.factor)
+			gotBbox := b.scale(tt.args.factor)
+			assert.InDelta(t, tt.want.north, gotBbox.north, EPSILON_RAD, "north not within epsilon")
+			assert.InDelta(t, tt.want.south, gotBbox.south, EPSILON_RAD, "south not within epsilon")
+			assert.InDelta(t, tt.want.east, gotBbox.east, EPSILON_RAD, "east not within epsilon")
+			assert.InDelta(t, tt.want.west, gotBbox.west, EPSILON_RAD, "west not within epsilon")
 		})
 	}
 }
