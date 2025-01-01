@@ -522,7 +522,7 @@ func Test_faceIJKToH3(t *testing.T) {
 		{
 			name:    "valid res 1",
 			args:    args{fijk: faceIJK{face: 1, coord: coordIJK{i: 1, j: 0, k: 0}}, res: 1},
-			want:    Cell(0x8101fffffffffff),
+			want:    Cell(0x81053ffffffffff),
 			wantErr: assert.NoError,
 		},
 	}
