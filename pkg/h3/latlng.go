@@ -1,6 +1,8 @@
 package h3
 
-import "math"
+import (
+	"math"
+)
 
 const (
 	// EPSILON_DEG is an epsilon of ~0.1mm in degrees
@@ -30,20 +32,22 @@ func (l LatLng) Longitude() float64 {
 
 // NewLatLng creates a new LatLng from the given latitude and longitude in degrees.
 func NewLatLng(lat float64, lng float64) LatLng {
-	return LatLng{
-		deg2rad(lat),
-		deg2rad(lng),
-	}
+	return NewLatLngRads(deg2rad(lat), deg2rad(lng))
+}
+
+// NewLatLngRads creates a new LatLng from the given latitude and longitude in radians.
+func NewLatLngRads(latRads float64, lngRads float64) LatLng {
+	return LatLng{latRads, lngRads}
 }
 
 // deg2rad converts degrees to radians.
 func deg2rad(deg float64) float64 {
-	return (deg * math.Pi) / 180.0
+	return deg * M_PI_180
 }
 
 // rad2deg converts radians to degrees.
 func rad2deg(rad float64) float64 {
-	return (rad * 180.0) / math.Pi
+	return rad * M_180_PI
 }
 
 // posAngleRads normalizes radians to a value between 0.0 and two*PI.
