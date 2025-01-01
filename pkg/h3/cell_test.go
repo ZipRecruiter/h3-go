@@ -283,12 +283,6 @@ func TestCell_neighborRotations(t *testing.T) {
 		assert.Error(t, err, "invalid direction should fail")
 		assert.Nil(t, out)
 	})
-
-	t.Run("neighbor from a cell near SF while debugging", func(t *testing.T) {
-		//origin := Cell(0x8029fffffffffff)
-		//rotations := 0
-		//out, rotations, err := origin.neighborRotations(K_AXES_DIGIT, rotations)
-	})
 }
 
 func Test_isResolutionClassIII(t *testing.T) {
@@ -434,6 +428,18 @@ func TestNewCellFromLatLng(t *testing.T) {
 			name:    "valid at 0,0 res 1",
 			args:    args{ll: NewLatLng(0, 0), res: 1},
 			want:    0x81757ffffffffff,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "valid at 0,0 res 2",
+			args:    args{ll: NewLatLng(0, 0), res: 2},
+			want:    0x82754ffffffffff,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "valid at 0,0 res 15",
+			args:    args{ll: NewLatLng(0, 0), res: 15},
+			want:    0x8f754e64992d6d8,
 			wantErr: assert.NoError,
 		},
 	}
