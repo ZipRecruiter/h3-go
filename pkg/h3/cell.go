@@ -414,8 +414,8 @@ func (c Cell) rotate60ccw() Cell {
 	res := c.Resolution()
 	out := c
 	for r := 1; r <= res; r++ {
-		oldDigit := c.getIndexDigit(r)
-		out = c.setIndexDigit(r, rotate60ccw(oldDigit))
+		oldDigit := out.getIndexDigit(r)
+		out = out.setIndexDigit(r, rotate60ccw(oldDigit))
 	}
 	return out
 }
