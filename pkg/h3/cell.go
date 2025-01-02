@@ -172,7 +172,16 @@ func faceIJKToH3(fijk faceIJK, res int) (Cell, error) {
 }
 
 func newCell(res int, bc baseCell, initDigit Direction) Cell {
-	return H3_INIT.setMode(H3_CELL_MODE).setBaseCell(bc).setResolution(res).setIndexDigit(res, initDigit)
+	h := H3_INIT
+	h = h.setMode(H3_CELL_MODE)
+	h = h.setBaseCell(bc)
+	h = h.setResolution(res)
+
+	for r := 1; r <= res; r++ {
+		h = h.setIndexDigit(r, initDigit)
+	}
+
+	return h
 }
 
 // String returns the string representation of the cell as a hex-encoded string.
