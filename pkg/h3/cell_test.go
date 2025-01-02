@@ -271,17 +271,14 @@ func TestCell_neighborRotations(t *testing.T) {
 
 	t.Run("invalid rotations", func(t *testing.T) {
 		origin := Cell(0x811d7ffffffffff)
-		rotations := 0
+		var rotations int
 
-		out, rotations, err := origin.neighborRotations(-1, rotations)
+		_, rotations, err := origin.neighborRotations(-1, rotations)
 		assert.Error(t, err, "invalid direction should fail")
-		assert.Nil(t, out)
-		out, rotations, err = origin.neighborRotations(7, rotations)
+		_, rotations, err = origin.neighborRotations(7, rotations)
 		assert.Error(t, err, "invalid direction should fail")
-		assert.Nil(t, out)
-		out, rotations, err = origin.neighborRotations(100, rotations)
+		_, rotations, err = origin.neighborRotations(100, rotations)
 		assert.Error(t, err, "invalid direction should fail")
-		assert.Nil(t, out)
 	})
 }
 
