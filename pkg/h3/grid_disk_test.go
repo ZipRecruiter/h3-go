@@ -79,8 +79,8 @@ func TestCell_gridDisk(t *testing.T) {
 	})
 
 	t.Run("invalid cell", func(t *testing.T) {
-		_, err := Cell(0x7fffffffffffffff).gridDisk(1000)
-		assert.Error(t, err, "should not be able to create a cell from an invalid index")
+		_, err := Cell(0x7fffffffffffffff).GridDisk(1000)
+		assert.Error(t, err, "should not be able to create a grid disk from an invalid index")
 	})
 
 	t.Run("san francisco k=0", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestCell_gridDisk(t *testing.T) {
 		sf, err := NewCellFromLatLng(sfLL, 0)
 		assert.NoError(t, err)
 
-		cells, distances, err := sf.gridDiskDistances(0)
+		cells, distances, err := sf.GridDiskDistances(0)
 		assert.NoError(t, err)
 		assert.Len(t, cells, 1)
 		assert.Len(t, distances, 1)
@@ -106,7 +106,7 @@ func TestCell_gridDisk(t *testing.T) {
 		sf, err := NewCellFromLatLng(sfLL, 1)
 		assert.NoError(t, err)
 
-		cells, distances, err := sf.gridDiskDistances(1)
+		cells, distances, err := sf.GridDiskDistances(1)
 		assert.NoError(t, err)
 		assert.Len(t, cells, 7)
 		assert.Len(t, distances, 7)
@@ -132,7 +132,7 @@ func TestCell_gridDisk(t *testing.T) {
 		sf, err := NewCellFromLatLng(sfLL, 0)
 		assert.NoError(t, err)
 
-		cells, distances, err := sf.gridDiskDistances(1)
+		cells, distances, err := sf.GridDiskDistances(1)
 		assert.NoError(t, err)
 		assert.Len(t, cells, 7)
 		assert.Len(t, distances, 7)

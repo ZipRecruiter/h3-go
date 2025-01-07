@@ -82,7 +82,7 @@ func (cs CellSet) GridDisk(k int) (CellSet, error) {
 
 	newSet := make(CellSet)
 	for cell := range cs {
-		gridDiskListForCell, err := cell.gridDisk(k)
+		gridDiskListForCell, err := cell.GridDisk(k)
 		if err != nil {
 			return nil, fmt.Errorf("error computing grid disk for cell %s: %w", cell, err)
 		}
