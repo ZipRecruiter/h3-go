@@ -1,7 +1,10 @@
 package h3
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewCellSetFromStrings(t *testing.T) {
@@ -84,5 +87,135 @@ func TestCellSet_Strings(t *testing.T) {
 		if !cs.Contains(c) {
 			t.Errorf("Strings() missing cell %v", c)
 		}
+	}
+}
+
+func TestCellSet_Union(t *testing.T) {
+	type args struct {
+		other CellSet
+	}
+	tests := []struct {
+		name string
+		cs   CellSet
+		args args
+		want CellSet
+	}{
+		{
+			"empty",
+			CellSet{},
+			args{CellSet{}},
+			CellSet{},
+		},
+		{
+			"non-empty",
+			CellSet{0x8f283473fffffff: {}},
+			args{CellSet{0x872830829fffffff: {}}},
+			CellSet{0x8f283473fffffff: {}, 0x872830829fffffff: {}},
+		},
+		{
+			"non-empty with overlap",
+			CellSet{0x8f283473fffffff: {}},
+			args{CellSet{0x8f283473fffffff: {}}},
+			CellSet{0x8f283473fffffff: {}},
+		},
+		{
+			"non-empty with empty",
+			CellSet{0x8f283473fffffff: {}},
+			args{CellSet{}},
+			CellSet{0x8f283473fffffff: {}},
+		},
+		{
+			"empty with non-empty",
+			CellSet{},
+			args{CellSet{0x8f283473fffffff: {}}},
+			CellSet{0x8f283473fffffff: {}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, tt.cs.Union(tt.args.other), "Union(%v)", tt.args.other)
+		})
+	}
+}
+
+func TestCellSet_GridDisk(t *testing.T) {
+	type args struct {
+		k int
+	}
+	tests := []struct {
+		name    string
+		cs      CellSet
+		args    args
+		want    CellSet
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			"empty",
+			CellSet{},
+			args{0},
+			CellSet{},
+			assert.NoError,
+		},
+		{
+			"non-empty",
+			CellSet{0x87283082affffff: {}},
+			args{0},
+			CellSet{0x87283082affffff: {}},
+			assert.NoError,
+		},
+		{
+			"non-empty k=1",
+			CellSet{0x87283082affffff: {}},
+			args{1},
+			CellSet{
+				0x87283082affffff: {},
+				0x87283082bffffff: {},
+				0x87283080cffffff: {},
+				0x872830801ffffff: {},
+				0x872830805ffffff: {},
+				0x87283082effffff: {},
+				0x872830828ffffff: {},
+			},
+			assert.NoError,
+		},
+		{
+			"two nearby cells, k=1",
+			CellSet{
+				0x87283082affffff: {},
+				0x872830823ffffff: {},
+			},
+			args{1},
+			CellSet{
+				0x872830801ffffff: {},
+				0x872830804ffffff: {},
+				0x872830805ffffff: {},
+				0x87283080cffffff: {},
+				0x872830820ffffff: {},
+				0x872830821ffffff: {},
+				0x872830822ffffff: {},
+				0x872830823ffffff: {},
+				0x872830828ffffff: {},
+				0x87283082affffff: {},
+				0x87283082bffffff: {},
+				0x87283082effffff: {},
+			},
+			assert.NoError,
+		},
+		{
+			"invalid k",
+			CellSet{0x87283082affffff: {}},
+			args{-1},
+			nil,
+			assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cs.GridDisk(tt.args.k)
+			if !tt.wantErr(t, err, fmt.Sprintf("GridDisk(%v)", tt.args.k)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "GridDisk(%v)", tt.args.k)
+		})
 	}
 }

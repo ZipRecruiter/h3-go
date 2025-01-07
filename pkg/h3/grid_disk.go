@@ -10,7 +10,7 @@ const (
 	K_ALL_CELLS_AT_RES_15 = 13780510
 )
 
-// Maximum number of cells that result from the gridDisk algorithm with the
+// Maximum number of cells that result from the GridDisk algorithm with the
 // given k. Formula source and proof: https://oeis.org/A003215
 func maxGridDiskSize(k int) (int, error) {
 	if k < 0 {
@@ -22,7 +22,7 @@ func maxGridDiskSize(k int) (int, error) {
 		// more cells than exist in the H3 grid at the finest resolution. This is a
 		// problem since the function does signed integer arithmetic on `k`, which could
 		// overflow. To prevent that, instead substitute the maximum number of cells in
-		// the grid, as it should not be possible for the gridDisk functions to exceed
+		// the grid, as it should not be possible for the GridDisk functions to exceed
 		// that. Note this is not resolution specific. So, when resolution < 15, this
 		// function may still estimate a size larger than the number of cells in the
 		// grid.
@@ -32,7 +32,7 @@ func maxGridDiskSize(k int) (int, error) {
 	return 3*k*(k+1) + 1, nil
 }
 
-// gridDiskDistancesSafe is the safe but slow version of gridDiskDistances (also
+// gridDiskDistancesSafe is the safe but slow version of GridDiskDistances (also
 // called by it when needed).
 //
 // Includes the origin cell in the output list (treating it as a hash set) and
@@ -139,21 +139,21 @@ func (c Cell) gridDiskUnsafe(k int) ([]Cell, error) {
 	return cells, err
 }
 
-// gridDisk produces cells within k distance of the origin cell.
+// GridDisk produces cells within k distance of the origin cell.
 //
 // k-ring 0 is defined as the origin cell, k-ring 1 is defined as k-ring 0 and
 // all neighboring cells, and so on.
-func (c Cell) gridDisk(k int) ([]Cell, error) {
-	cells, _, err := c.gridDiskDistances(k)
+func (c Cell) GridDisk(k int) ([]Cell, error) {
+	cells, _, err := c.GridDiskDistances(k)
 	return cells, err
 }
 
-// gridDiskDistances produces cells and their distances from the given origin
+// GridDiskDistances produces cells and their distances from the given origin
 // cell, up to distance k.
 //
 // k-ring 0 is defined as the origin cell, k-ring 1 is defined as k-ring 0 and
 // all neighboring cells, and so on.
-func (c Cell) gridDiskDistances(k int) ([]Cell, []int, error) {
+func (c Cell) GridDiskDistances(k int) ([]Cell, []int, error) {
 	// Try the faster, unsafe version first
 	cells, distances, err := c.gridDiskDistancesUnsafe(k)
 	if err == nil {
