@@ -94,3 +94,84 @@ func (cs CellSet) GridDisk(k int) (CellSet, error) {
 
 	return newSet, nil
 }
+
+// GridDistance returns the minimum grid distance between cells in the two sets.
+// All cells in the sets must have the same resolution. Distance is zero if any
+// of the cells overlap. The function will return an error if either set is
+// empty.
+func (cs CellSet) GridDistance(other CellSet) (int, error) {
+	// If either set is empty, return an error
+	if len(cs) == 0 || len(other) == 0 {
+		return 0, fmt.Errorf("cannot compute grid distance between empty cell sets")
+	}
+
+	// Both sets must contain cells with the same resolution.
+	thisResolution, err := cs.Resolution()
+	if err != nil {
+		return 0, fmt.Errorf("this cell set is not consistent resolution: %w", err)
+	}
+
+	otherResolution, err := other.Resolution()
+	if err != nil {
+		return 0, fmt.Errorf("other cell set is not consistent resolution: %w", err)
+	}
+
+	if thisResolution != otherResolution {
+		return 0, fmt.Errorf("cell sets have different resolutions: %d and %d", thisResolution, otherResolution)
+	}
+
+	// If any cells overlap, the distance is zero.
+	if cs.Intersects(other) {
+		return 0, nil
+	}
+
+	// Check all pairs of cells to find the minimum distance.
+	minDistance := -1
+
+	for c1 := range cs {
+		for c2 := range other {
+			d, err := c1.GridDistance(c2)
+			if err != nil {
+				return 0, fmt.Errorf("error computing grid distance between cells %s and %s: %w", c1, c2, err)
+			}
+
+			if minDistance == -1 || d < minDistance {
+				minDistance = d
+			}
+		}
+	}
+
+	return minDistance, nil
+}
+
+// Resolution returns the resolution of the cells in the set. The function will
+// return an error if the set is empty or contains cells of different
+// resolutions.
+func (cs CellSet) Resolution() (int, error) {
+	// If the set is empty, return an error
+	if len(cs) == 0 {
+		return 0, fmt.Errorf("empty cell set")
+	}
+
+	// Check if all cells have the same resolution
+	resolution := -1
+	for c := range cs {
+		if resolution == -1 {
+			resolution = c.Resolution()
+		} else if c.Resolution() != resolution {
+			return 0, fmt.Errorf("cell set contains cells of different resolutions")
+		}
+	}
+
+	return resolution, nil
+}
+
+// Intersects returns whether the set intersects with another set.
+func (cs CellSet) Intersects(other CellSet) bool {
+	for c := range cs {
+		if other.Contains(c) {
+			return true
+		}
+	}
+	return false
+}

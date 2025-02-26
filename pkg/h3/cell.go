@@ -495,8 +495,82 @@ func (c Cell) rotatePentagon60ccw() Cell {
 	return out
 }
 
+// GridDistance returns the number of grid cells between this cell and the other.
+//
+// This function may return an error if the cells are very far apart, if the
+// cells are not at the same resolution, or if the cells are on opposite sides of
+// a pentagon.
+func (c Cell) GridDistance(other Cell) (int, error) {
+	originIjk, err := c.toLocalIJK(c)
+	if err != nil {
+		return 0, err
+	}
+
+	otherIjk, err := c.toLocalIJK(other)
+	if err != nil {
+		return 0, err
+	}
+
+	return originIjk.Distance(otherIjk), nil
+}
+
 func (c Cell) isResolutionClassIII() bool {
 	return c.Resolution()%2 > 0
+}
+
+// rotatePentagon60ccw rotates the Cell 60 degrees clockwise about a pentagonal center and returns the new index.
+func (c Cell) rotatePentagon60cw() Cell {
+	foundFirstNonZeroDigit := false
+	out := c
+	res := out.Resolution()
+
+	for r := 1; r <= res; r++ {
+		// rotate this digit
+		out = out.setIndexDigit(r, rotate60cw(out.getIndexDigit(r)))
+
+		// look for the first non-zero digit so we can adjust for deleted k-axes sequence
+		// if necessary
+		if !foundFirstNonZeroDigit && out.getIndexDigit(r) != 0 {
+			foundFirstNonZeroDigit = true
+
+			// adjust for deleted k-axes sequence
+			if out.leadingNonZeroDigit() == K_AXES_DIGIT {
+				out = out.rotate60cw()
+			}
+		}
+	}
+
+	return out
+}
+
+// toFaceIjkWithInitializedFijk converts a Cell to the FaceIJK address on a specified icosahedral face.
+func (c Cell) toFaceIjkWithInitializedFijk(fijk faceIJK) (faceIJK, bool) {
+	ijk := fijk.coord
+	res := c.Resolution()
+
+	// center base cell hierarchy is entirely on this face
+	possibleOverage := true
+	if (!c.BaseCell().isPentagon()) &&
+		(res == 0 ||
+			(fijk.coord.i == 0 && fijk.coord.j == 0 && fijk.coord.k == 0)) {
+		possibleOverage = false
+	}
+
+	for r := 1; r <= res; r++ {
+		if isResolutionClassIII(r) {
+			// Class III == rotate ccw
+			ijk = ijk.downAp7()
+		} else {
+			// Class II == rotate cw
+			ijk = ijk.downAp7r()
+		}
+
+		ijk = ijk.neighbor(c.getIndexDigit(r))
+	}
+
+	fijk.coord = ijk
+
+	return fijk, possibleOverage
 }
 
 // rotate60ccw rotates the given digit 60 degrees counter-clockwise and returns the new digit.

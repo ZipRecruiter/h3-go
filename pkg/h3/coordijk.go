@@ -785,3 +785,51 @@ func (c coordIJK) upAp7rChecked() (coordIJK, error) {
 
 	return o.normalize(), nil
 }
+
+// rotate60cw rotates the ijk coordinates 60 degrees clockwise and returns the result.
+func (c coordIJK) rotate60cw() coordIJK {
+	// unit vector rotations
+	iVec := coordIJK{1, 0, 1}
+	jVec := coordIJK{1, 1, 0}
+	kVec := coordIJK{0, 1, 1}
+
+	iVec = iVec.scale(c.i)
+	jVec = jVec.scale(c.j)
+	kVec = kVec.scale(c.k)
+
+	out := iVec.add(jVec)
+	out = out.add(kVec)
+
+	out = out.normalize()
+	return out
+}
+
+// rotate60ccw rotates the ijk coordinates 60 degrees counter-clockwise and returns the result.
+func (c coordIJK) rotate60ccw() coordIJK {
+	// unit vector rotations
+	iVec := coordIJK{1, 1, 0}
+	jVec := coordIJK{0, 1, 1}
+	kVec := coordIJK{1, 0, 1}
+
+	iVec = iVec.scale(c.i)
+	jVec = jVec.scale(c.j)
+	kVec = kVec.scale(c.k)
+
+	out := iVec.add(jVec)
+	out = out.add(kVec)
+
+	out = out.normalize()
+	return out
+}
+
+// Distance returns the distance between two ijk coordinates.
+func (c coordIJK) Distance(other coordIJK) int {
+	diff := c.subtract(other)
+	diff = diff.normalize()
+	absDiff := coordIJK{
+		i: int(math.Abs(float64(diff.i))),
+		j: int(math.Abs(float64(diff.j))),
+		k: int(math.Abs(float64(diff.k))),
+	}
+	return max(max(absDiff.i, absDiff.j), absDiff.k)
+}

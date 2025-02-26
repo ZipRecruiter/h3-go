@@ -573,3 +573,75 @@ func TestCell_isPentagon(t *testing.T) {
 		})
 	}
 }
+
+func TestCell_GridDistance(t *testing.T) {
+	type args struct {
+		other Cell
+	}
+	tests := []struct {
+		name    string
+		c       Cell
+		args    args
+		want    int
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "identity",
+			c:       0x81283ffffffffff,
+			args:    args{other: 0x81283ffffffffff},
+			want:    0,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "next to each other",
+			c:       0x872830874ffffff,
+			args:    args{other: 0x872830876ffffff},
+			want:    1,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "one further away",
+			c:       0x872830874ffffff,
+			args:    args{other: 0x87283080dffffff},
+			want:    2,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "three away",
+			c:       0x872830874ffffff,
+			args:    args{other: 0x872830808ffffff},
+			want:    3,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "from examples/distance.c",
+			c:       0x8f2830828052d25,              // 1455 Market St @ resolution 15
+			args:    args{other: 0x8f283082a30e623}, // 555 Market St @ resolution 15
+			want:    2340,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "resolution mismatch",
+			c:       0x832830fffffffff,
+			args:    args{other: 0x822837fffffffff},
+			want:    0,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "distance from invalid cell",
+			c:       0xffffffffffffffff,
+			args:    args{other: 0xffffffffffffffff},
+			want:    0,
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.c.GridDistance(tt.args.other)
+			if !tt.wantErr(t, err, fmt.Sprintf("GridDistance(%v)", tt.args.other)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "GridDistance(%v)", tt.args.other)
+		})
+	}
+}
