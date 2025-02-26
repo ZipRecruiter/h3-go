@@ -219,3 +219,153 @@ func TestCellSet_GridDisk(t *testing.T) {
 		})
 	}
 }
+
+func TestCellSet_Intersects(t *testing.T) {
+	type args struct {
+		other CellSet
+	}
+	tests := []struct {
+		name string
+		cs   CellSet
+		args args
+		want bool
+	}{
+		{
+			"empty",
+			CellSet{},
+			args{CellSet{}},
+			false,
+		},
+		{
+			"non-empty intersects",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x87283082affffff: {}}},
+			true,
+		},
+		{
+			"non-empty no intersection",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x87283082bffffff: {}}},
+			false,
+		},
+		{
+			"empty other",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, tt.cs.Intersects(tt.args.other), "Intersects(%v)", tt.args.other)
+		})
+	}
+}
+
+func TestCellSet_Resolution(t *testing.T) {
+	tests := []struct {
+		name    string
+		cs      CellSet
+		want    int
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			"empty",
+			CellSet{},
+			0,
+			assert.Error,
+		},
+		{
+			"single cell",
+			CellSet{0x87283082affffff: {}},
+			7,
+			assert.NoError,
+		},
+		{
+			"multiple cells",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}},
+			7,
+			assert.NoError,
+		},
+		{
+			"multiple cells different resolutions",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x86283080fffffff: {}}, // 7, 7, 6
+			0,
+			assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cs.Resolution()
+			if !tt.wantErr(t, err, fmt.Sprintf("Resolution()")) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "Resolution()")
+		})
+	}
+}
+
+func TestCellSet_GridDistance(t *testing.T) {
+	type args struct {
+		other CellSet
+	}
+	tests := []struct {
+		name    string
+		cs      CellSet
+		args    args
+		want    int
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			"empty",
+			CellSet{},
+			args{CellSet{}},
+			0,
+			assert.Error,
+		},
+		{
+			"single identical cell",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x87283082affffff: {}}},
+			0,
+			assert.NoError,
+		},
+		{
+			"different resolutions",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x86283080fffffff: {}}},
+			0,
+			assert.Error,
+		},
+		{
+			"single cell distance 1",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x87283082bffffff: {}}},
+			1,
+			assert.NoError,
+		},
+		{
+			"overlapping cell sets",
+			CellSet{0x872830876ffffff: {}, 0x872830874ffffff: {}},
+			args{CellSet{0x872830876ffffff: {}, 0x872830808ffffff: {}}},
+			0,
+			assert.NoError,
+		},
+		{
+			"non-zero distance",
+			CellSet{0x872830876ffffff: {}, 0x872830874ffffff: {}},
+			args{CellSet{0x872830808ffffff: {}}},
+			2,
+			assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cs.GridDistance(tt.args.other)
+			if !tt.wantErr(t, err, fmt.Sprintf("GridDistance(%v)", tt.args.other)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "GridDistance(%v)", tt.args.other)
+		})
+	}
+}
