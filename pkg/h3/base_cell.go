@@ -817,6 +817,23 @@ func (c baseCell) isPolarPentagon() bool {
 	return c == 4 || c == 117
 }
 
+// baseCellDirection returns the direction from the origin base cell to the
+// neighbor base cell. Returns INVALID_DIGIT if the cells are not neighbors.
+func (c baseCell) baseCellDirection(neighbor baseCell) Direction {
+	for dir := CENTER_DIGIT; dir < NUM_DIGITS; dir++ {
+		testBaseCell := c.getBaseCellNeighbor(dir)
+		if testBaseCell == neighbor {
+			return dir
+		}
+	}
+	return INVALID_DIGIT
+}
+
+// getBaseCellNeighbor returns the neighboring base cell in the given direction.
+func (c baseCell) getBaseCellNeighbor(dir Direction) baseCell {
+	return baseCellNeighbors[c][dir]
+}
+
 // faceIjkToBaseCellCCWrot60 finds the base cell given FaceIJK.
 //
 // Given the face number and a resolution 0 ijk+ coordinate in that face's
