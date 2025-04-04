@@ -173,26 +173,68 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 		return 0, fmt.Errorf("error getting boundary cells for other set: %w", err)
 	}
 
-	// Check all pairs of boundary cells to find the minimum distance.
-	minDistance := -1
+	// Group cells by their lower-resolution parent to reduce search space. We'll use 2 levels of parent to create the groups.
+	const parentReduction = 2
+	selfGroups := make(map[Cell][]Cell)
+	otherGroups := make(map[Cell][]Cell)
 
-	// Choose the smaller set to iterate over
-	var a, b CellSet
-	if len(selfBoundaryCells) < len(otherBoundaryCells) {
-		a, b = selfBoundaryCells, otherBoundaryCells
-	} else {
-		a, b = otherBoundaryCells, selfBoundaryCells
+	// Group cells by their parent
+	for c := range selfBoundaryCells {
+		parent, err := c.Parent(thisResolution - parentReduction)
+		if err != nil {
+			return 0, fmt.Errorf("error getting parent for cell %s: %w", c, err)
+		}
+		selfGroups[parent] = append(selfGroups[parent], c)
 	}
 
-	for c1 := range a {
-		for c2 := range b {
-			d, err := c1.GridDistance(c2)
+	for c := range otherBoundaryCells {
+		parent, err := c.Parent(thisResolution - parentReduction)
+		if err != nil {
+			return 0, fmt.Errorf("error getting parent for cell %s: %w", c, err)
+		}
+		otherGroups[parent] = append(otherGroups[parent], c)
+	}
+
+	// First find minimum distance between parent cells
+	minParentDistance := -1
+	relevantPairs := make([][2]Cell, 0, len(selfGroups)*len(otherGroups))
+	for parent1 := range selfGroups {
+		for parent2 := range otherGroups {
+			d, err := parent1.GridDistance(parent2)
 			if err != nil {
-				return 0, fmt.Errorf("error computing grid distance between cells %s and %s: %w", c1, c2, err)
+				return 0, fmt.Errorf("error computing grid distance between parent cells %s and %s: %w", parent1, parent2, err)
 			}
 
-			if minDistance == -1 || d < minDistance {
-				minDistance = d
+			if minParentDistance == -1 || d < minParentDistance {
+				minParentDistance = d
+				relevantPairs = relevantPairs[:0]
+			}
+
+			// This pair is among the closest, so we'll check its children later
+			if d <= minParentDistance+parentReduction {
+				relevantPairs = append(relevantPairs, [2]Cell{parent1, parent2})
+			}
+		}
+	}
+
+	// Now calculate the actual minimum distance between the children of the relevant pairs
+	minDistance := -1
+
+	for _, pair := range relevantPairs {
+		parent1, parent2 := pair[0], pair[1]
+		childrenPairs1 := selfGroups[parent1]
+		childrenPairs2 := otherGroups[parent2]
+
+		for _, c1 := range childrenPairs1 {
+			for _, c2 := range childrenPairs2 {
+				d, err := c1.GridDistance(c2)
+				if err != nil {
+					return 0, fmt.Errorf("error computing grid distance between cells %s and %s: %w", c1, c2, err)
+				}
+
+				if minDistance == -1 || d < minDistance {
+					minDistance = d
+				}
 			}
 		}
 	}
