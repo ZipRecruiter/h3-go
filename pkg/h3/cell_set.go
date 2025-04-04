@@ -294,3 +294,36 @@ func (cs CellSet) Intersects(other CellSet) bool {
 	}
 	return false
 }
+
+// Subtract returns a new cell set that contains the cells in the first set that
+// are not in the second set. Both sets must have the same resolution.
+func (cs CellSet) Subtract(other CellSet) (CellSet, error) {
+	// If other is empty, return the set itself
+	if len(other) == 0 {
+		return cs, nil
+	}
+
+	// Both sets must contain cells with the same resolution.
+	thisResolution, err := cs.Resolution()
+	if err != nil {
+		return nil, fmt.Errorf("this cell set is not consistent resolution: %w", err)
+	}
+
+	otherResolution, err := other.Resolution()
+	if err != nil {
+		return nil, fmt.Errorf("other cell set is not consistent resolution: %w", err)
+	}
+
+	if thisResolution != otherResolution {
+		return nil, fmt.Errorf("cell sets have different resolutions: %d and %d", thisResolution, otherResolution)
+	}
+
+	result := make(CellSet, len(cs))
+	for c := range cs {
+		if !other.Contains(c) {
+			result.Add(c)
+		}
+	}
+
+	return result, nil
+}
