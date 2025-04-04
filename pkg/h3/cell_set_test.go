@@ -369,3 +369,100 @@ func TestCellSet_GridDistance(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkCellSet_GridDisk(b *testing.B) {
+	// L7 cells for San Francisco
+	cells := NewCellSetFromCells([]Cell{
+		0x872830876ffffff,
+		0x87283082bffffff,
+		0x87283082affffff,
+		0x872830874ffffff,
+		0x872830829ffffff,
+		0x872830828ffffff,
+		0x87283082effffff,
+		0x87283095bffffff,
+		0x87283095affffff,
+		0x87283082dffffff,
+		0x87283082cffffff,
+		0x872830821ffffff,
+		0x872830820ffffff,
+		0x872830958ffffff,
+		0x87283095effffff,
+		0x872830953ffffff,
+		0x872830952ffffff,
+		0x872830825ffffff,
+		0x87283095cffffff,
+		0x872830951ffffff,
+		0x872830950ffffff,
+		0x872830942ffffff,
+	})
+
+	for k := 0; k < 100; k++ {
+		b.Run(fmt.Sprintf("k=%d", k), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, err := cells.GridDisk(k)
+				if err != nil {
+					b.Fatalf("GridDisk() error = %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestCellSet_BoundaryCells(t *testing.T) {
+	tests := []struct {
+		name    string
+		cs      CellSet
+		want    CellSet
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			"empty",
+			CellSet{},
+			CellSet{},
+			assert.NoError,
+		},
+		{
+			"single cell",
+			CellSet{0x87283082affffff: {}},
+			CellSet{0x87283082affffff: {}},
+			assert.NoError,
+		},
+		{
+			"two cells",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}},
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}},
+			assert.NoError,
+		},
+		{
+			"6 cells around a center cell should return the outer cells",
+			CellSet{
+				0x872830876ffffff: {},
+				0x87283082bffffff: {},
+				0x872830874ffffff: {},
+				0x872830829ffffff: {},
+				0x872830828ffffff: {},
+				0x87283082dffffff: {},
+				0x87283095affffff: {},
+			},
+			CellSet{
+				0x872830876ffffff: {},
+				0x87283082bffffff: {},
+				0x872830828ffffff: {},
+				0x87283082dffffff: {},
+				0x87283095affffff: {},
+				0x872830874ffffff: {},
+			},
+			assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cs.BoundaryCells()
+			if !tt.wantErr(t, err, fmt.Sprintf("BoundaryCells()")) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "BoundaryCells()")
+		})
+	}
+}
