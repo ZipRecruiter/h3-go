@@ -645,3 +645,61 @@ func TestCell_GridDistance(t *testing.T) {
 		})
 	}
 }
+
+func TestCell_Parent(t *testing.T) {
+	type args struct {
+		res int
+	}
+	tests := []struct {
+		name    string
+		c       Cell
+		args    args
+		want    Cell
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "valid parent",
+			c:       0x872830829ffffff,
+			args:    args{res: 2},
+			want:    0x822837fffffffff,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "res is too low",
+			c:       0x872830829ffffff,
+			args:    args{res: -1},
+			want:    0,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "res is too high",
+			c:       0x872830829ffffff,
+			args:    args{res: MAX_H3_RES + 1},
+			want:    0,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "res is same",
+			c:       0x872830829ffffff,
+			args:    args{res: 7},
+			want:    0x872830829ffffff,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "res is higher",
+			c:       0x872830829ffffff,
+			args:    args{res: 16},
+			want:    0,
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.c.Parent(tt.args.res)
+			if !tt.wantErr(t, err, fmt.Sprintf("Parent(%v)", tt.args.res)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "Parent(%v)", tt.args.res)
+		})
+	}
+}

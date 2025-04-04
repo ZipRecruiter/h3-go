@@ -306,6 +306,12 @@ func TestCellSet_Resolution(t *testing.T) {
 }
 
 func TestCellSet_GridDistance(t *testing.T) {
+	// L7 cells for San Francisco
+	sfCells := NewCellSetFromCells([]Cell{0x872830876ffffff, 0x87283082bffffff, 0x87283082affffff, 0x872830874ffffff, 0x872830829ffffff, 0x872830828ffffff, 0x87283082effffff, 0x87283095bffffff, 0x87283095affffff, 0x87283082dffffff, 0x87283082cffffff, 0x872830821ffffff, 0x872830820ffffff, 0x872830958ffffff, 0x87283095effffff, 0x872830953ffffff, 0x872830952ffffff, 0x872830825ffffff, 0x87283095cffffff, 0x872830951ffffff, 0x872830950ffffff, 0x872830942ffffff})
+
+	// L7 cells for Vallejo
+	vallejoCells := NewCellSetFromCells([]Cell{0x87283002dffffff, 0x87283002cffffff, 0x87283002effffff, 0x872830023ffffff, 0x872830004ffffff, 0x872830153ffffff, 0x872830152ffffff, 0x872830021ffffff, 0x872830020ffffff, 0x872830022ffffff, 0x872830026ffffff, 0x872830024ffffff, 0x872830025ffffff, 0x872830156ffffff, 0x872830150ffffff, 0x872830154ffffff, 0x872830109ffffff, 0x87283010bffffff, 0x87283010affffff, 0x872830119ffffff, 0x87283011dffffff, 0x87283010effffff, 0x872830108ffffff})
+
 	type args struct {
 		other CellSet
 	}
@@ -356,6 +362,13 @@ func TestCellSet_GridDistance(t *testing.T) {
 			CellSet{0x872830876ffffff: {}, 0x872830874ffffff: {}},
 			args{CellSet{0x872830808ffffff: {}}},
 			2,
+			assert.NoError,
+		},
+		{
+			"sf to vallejo",
+			sfCells,
+			args{vallejoCells},
+			16,
 			assert.NoError,
 		},
 	}
@@ -464,5 +477,42 @@ func TestCellSet_BoundaryCells(t *testing.T) {
 			}
 			assert.Equalf(t, tt.want, got, "BoundaryCells()")
 		})
+	}
+}
+
+func BenchmarkCellSet_GridDistance(b *testing.B) {
+	// L7 cells for San Francisco
+	sfCells := NewCellSetFromCells([]Cell{0x872830876ffffff, 0x87283082bffffff, 0x87283082affffff, 0x872830874ffffff, 0x872830829ffffff, 0x872830828ffffff, 0x87283082effffff, 0x87283095bffffff, 0x87283095affffff, 0x87283082dffffff, 0x87283082cffffff, 0x872830821ffffff, 0x872830820ffffff, 0x872830958ffffff, 0x87283095effffff, 0x872830953ffffff, 0x872830952ffffff, 0x872830825ffffff, 0x87283095cffffff, 0x872830951ffffff, 0x872830950ffffff, 0x872830942ffffff})
+
+	// L7 cells for Vallejo
+	vallejoCells := NewCellSetFromCells([]Cell{0x87283002dffffff, 0x87283002cffffff, 0x87283002effffff, 0x872830023ffffff, 0x872830004ffffff, 0x872830153ffffff, 0x872830152ffffff, 0x872830021ffffff, 0x872830020ffffff, 0x872830022ffffff, 0x872830026ffffff, 0x872830024ffffff, 0x872830025ffffff, 0x872830156ffffff, 0x872830150ffffff, 0x872830154ffffff, 0x872830109ffffff, 0x87283010bffffff, 0x87283010affffff, 0x872830119ffffff, 0x87283011dffffff, 0x87283010effffff, 0x872830108ffffff})
+
+	// L7 cells for Chicago
+	chicagoCells := NewCellSetFromCells([]Cell{0x872664523ffffff, 0x872664c84ffffff, 0x87266452dffffff, 0x872664c89ffffff, 0x872664193ffffff, 0x872664ca2ffffff, 0x872664cacffffff, 0x872664cb1ffffff, 0x872664564ffffff, 0x872664cc0ffffff, 0x872664cc5ffffff, 0x872664ccaffffff, 0x872664cd4ffffff, 0x872664cd9ffffff, 0x872664cdeffffff, 0x872664cf2ffffff, 0x872664d88ffffff, 0x87275934cffffff, 0x872664c1effffff, 0x872664521ffffff, 0x872664c8cffffff, 0x872664191ffffff, 0x872664196ffffff, 0x872664ca0ffffff, 0x872664ca5ffffff, 0x872664caaffffff, 0x872664562ffffff, 0x87266456cffffff, 0x872664cc3ffffff, 0x872664cc8ffffff, 0x872664ccdffffff, 0x872664cd2ffffff, 0x872664cdcffffff, 0x872664cebffffff, 0x872664cf0ffffff, 0x872664cf5ffffff, 0x872664d8bffffff, 0x872664d9affffff, 0x872664c12ffffff, 0x872664c80ffffff, 0x872664c85ffffff, 0x872664194ffffff, 0x872664ca3ffffff, 0x872664ca8ffffff, 0x872664cadffffff, 0x872664cb2ffffff, 0x8726641b2ffffff, 0x872664560ffffff, 0x872664565ffffff, 0x872664cc1ffffff, 0x872664cc6ffffff, 0x872664ccbffffff, 0x872664cd0ffffff, 0x872664cd5ffffff, 0x872664cf3ffffff, 0x872664d89ffffff, 0x872664d8effffff, 0x872664d98ffffff, 0x872664d9dffffff, 0x872759343ffffff, 0x87275934dffffff, 0x87275936bffffff, 0x872664c10ffffff, 0x872664c1affffff, 0x872664c83ffffff, 0x87266452cffffff, 0x872664c88ffffff, 0x872664c8dffffff, 0x872664192ffffff, 0x872664ca1ffffff, 0x872664ca6ffffff, 0x872664cabffffff, 0x872664cb0ffffff, 0x872664cb5ffffff, 0x872664563ffffff, 0x872664cc4ffffff, 0x872664cc9ffffff, 0x872664cceffffff, 0x872664cd3ffffff, 0x872664cd8ffffff, 0x872664cddffffff, 0x872664ce2ffffff, 0x872664cf1ffffff, 0x872664cf6ffffff, 0x872664d8cffffff, 0x872664d9bffffff, 0x872759341ffffff, 0x872759369ffffff, 0x872664c13ffffff, 0x872664c18ffffff, 0x872664520ffffff, 0x872664525ffffff, 0x872664c81ffffff, 0x872664c86ffffff, 0x872664c8bffffff, 0x872664190ffffff, 0x872664ca4ffffff, 0x872664ca9ffffff, 0x872664caeffffff, 0x872664561ffffff, 0x872664566ffffff, 0x872664cc2ffffff, 0x872664570ffffff, 0x872664575ffffff, 0x872664cccffffff, 0x872664cd1ffffff, 0x872664cd6ffffff, 0x872664cdbffffff, 0x872664ceaffffff, 0x872664cf4ffffff, 0x872664d8affffff, 0x872664d99ffffff, 0x872664d9effffff, 0x87275934effffff, 0x87275935dffffff, 0x872664c16ffffff, 0x872664c1bffffff})
+
+	// L7 cells for Milwaukee
+	mkeCells := NewCellSetFromCells([]Cell{0x87275d745ffffff, 0x87275d39affffff, 0x87275d0dcffffff, 0x87275d764ffffff, 0x87275d396ffffff, 0x87275d286ffffff, 0x87275d0d8ffffff, 0x87275d76dffffff, 0x87275d2b2ffffff, 0x87275d0cbffffff, 0x87275d760ffffff, 0x87275d392ffffff, 0x87275d282ffffff, 0x87275d769ffffff, 0x87275d39bffffff, 0x87275d0ddffffff, 0x87275d765ffffff, 0x87275d294ffffff, 0x87275d0c3ffffff, 0x87275d0d9ffffff, 0x87275d76effffff, 0x87275d2b3ffffff, 0x87275d761ffffff, 0x87275d2a6ffffff, 0x87275d393ffffff, 0x87275d283ffffff, 0x87275d39cffffff, 0x87275d2a2ffffff, 0x87275d766ffffff, 0x87275d398ffffff, 0x87275d2b4ffffff, 0x87275d74cffffff, 0x87275d762ffffff, 0x87275d284ffffff, 0x87275d76bffffff, 0x87275d2b0ffffff, 0x87275d390ffffff, 0x87275d280ffffff, 0x87275d296ffffff, 0x87275d0dbffffff, 0x87275d2b5ffffff, 0x87275d763ffffff, 0x87275d76cffffff, 0x87275d2b1ffffff, 0x87275d39effffff, 0x87275d0caffffff, 0x87275d775ffffff, 0x87275d391ffffff, 0x87275d281ffffff, 0x87275d768ffffff, 0x87275d0d1ffffff})
+
+	// L7 cells for Evanston (adjacent to Chicago)
+	evanstonCells := NewCellSetFromCells([]Cell{0x872664d81ffffff, 0x872664d85ffffff, 0x872664d80ffffff, 0x872664d84ffffff})
+
+	for i := 0; i < b.N; i++ {
+		// Distance between smaller, closer sets
+		_, err := sfCells.GridDistance(vallejoCells)
+		if err != nil {
+			b.Fatalf("GridDistance() error = %v", err)
+		}
+
+		// Distance between larger, farther sets
+		_, err = chicagoCells.GridDistance(mkeCells)
+		if err != nil {
+			b.Fatalf("GridDistance() error = %v", err)
+		}
+
+		// Distance between two adjacent (but not overlapping) sets
+		_, err = chicagoCells.GridDistance(evanstonCells)
+		if err != nil {
+			b.Fatalf("GridDistance() error = %v", err)
+		}
 	}
 }
