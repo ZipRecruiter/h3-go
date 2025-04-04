@@ -573,6 +573,27 @@ func (c Cell) toFaceIjkWithInitializedFijk(fijk faceIJK) (faceIJK, bool) {
 	return fijk, possibleOverage
 }
 
+// Parent produces the parent cell for a given H3 cell. res is the resolution to
+// switch to.
+func (c Cell) Parent(res int) (Cell, error) {
+	childRes := c.Resolution()
+
+	if res < 0 || res > MAX_H3_RES {
+		return 0, ErrInvalidArgument
+	} else if res > childRes {
+		return 0, ErrInvalidArgument
+	} else if res == childRes {
+		return c, nil
+	}
+
+	parent := c.setResolution(res)
+	for r := res + 1; r <= childRes; r++ {
+		parent = parent.setIndexDigit(r, H3_DIGIT_MASK)
+	}
+
+	return parent, nil
+}
+
 // rotate60ccw rotates the given digit 60 degrees counter-clockwise and returns the new digit.
 func rotate60ccw(digit Direction) Direction {
 	switch digit {
