@@ -173,8 +173,8 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 		return 0, fmt.Errorf("error getting boundary cells for other set: %w", err)
 	}
 
-	// Group cells by their lower-resolution parent to reduce search space. We'll use 2 levels of parent to create the groups.
-	const parentReduction = 2
+	// Group cells by their lower-resolution parent to reduce search space.
+	parentReduction := 1
 	selfGroups := make(map[Cell][]Cell)
 	otherGroups := make(map[Cell][]Cell)
 
