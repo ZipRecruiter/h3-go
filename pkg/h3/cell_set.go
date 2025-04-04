@@ -162,24 +162,13 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 		return 0, nil
 	}
 
-	// Get boundary cells of both sets
-	selfBoundaryCells, err := cs.BoundaryCells()
-	if err != nil {
-		return 0, fmt.Errorf("error getting boundary cells for this set: %w", err)
-	}
-
-	otherBoundaryCells, err := other.BoundaryCells()
-	if err != nil {
-		return 0, fmt.Errorf("error getting boundary cells for other set: %w", err)
-	}
-
 	// Group cells by their lower-resolution parent to reduce search space.
 	parentReduction := 1
 	selfGroups := make(map[Cell][]Cell)
 	otherGroups := make(map[Cell][]Cell)
 
 	// Group cells by their parent
-	for c := range selfBoundaryCells {
+	for c := range cs {
 		parent, err := c.Parent(thisResolution - parentReduction)
 		if err != nil {
 			return 0, fmt.Errorf("error getting parent for cell %s: %w", c, err)
@@ -187,7 +176,7 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 		selfGroups[parent] = append(selfGroups[parent], c)
 	}
 
-	for c := range otherBoundaryCells {
+	for c := range other {
 		parent, err := c.Parent(thisResolution - parentReduction)
 		if err != nil {
 			return 0, fmt.Errorf("error getting parent for cell %s: %w", c, err)
