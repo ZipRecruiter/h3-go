@@ -1,6 +1,8 @@
 package h3
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // CellSet represents a set of H3 cells.
 type CellSet map[Cell]struct{}
@@ -76,23 +78,58 @@ func (cs CellSet) Union(other CellSet) CellSet {
 // is the set of cells within k grid steps of the cells in the set. k=0 returns
 // the set itself.
 func (cs CellSet) GridDisk(k int) (CellSet, error) {
+	// k<0 returns an error
+	if k < 0 {
+		return nil, fmt.Errorf("k must be >= 0")
+	}
+
+	// k=0 returns the set itself
 	if k == 0 {
 		return cs, nil
 	}
 
-	newSet := make(CellSet)
-	for cell := range cs {
-		gridDiskListForCell, err := cell.GridDisk(k)
-		if err != nil {
-			return nil, fmt.Errorf("error computing grid disk for cell %s: %w", cell, err)
-		}
-
-		gridDiskSetForCell := NewCellSetFromCells(gridDiskListForCell)
-
-		newSet = newSet.Union(gridDiskSetForCell)
+	// If the set is empty, return an error
+	if len(cs) == 0 {
+		return nil, fmt.Errorf("empty cell set")
 	}
 
-	return newSet, nil
+	// Start with the original set
+	result := make(CellSet, len(cs))
+	for c := range cs {
+		result.Add(c)
+	}
+
+	// For each k, expand only the cells added in the previous step
+	currentShell := cs
+	for i := 0; i < k; i++ {
+		// Find boundary cells of the current shell
+		nextShell := make(CellSet, len(currentShell))
+
+		for c := range currentShell {
+			// Get immediate neighbors of the current shell
+			neighbors, err := c.GridDisk(1)
+			if err != nil {
+				return nil, fmt.Errorf("error getting neighbors for cell %s: %w", c, err)
+			}
+
+			// Add new neighbors to the next shell
+			for _, n := range neighbors {
+				if !result.Contains(n) {
+					nextShell.Add(n)
+					result.Add(n)
+				}
+			}
+		}
+
+		if len(nextShell) == 0 {
+			break // No new cells added, exit the loop
+		}
+
+		// Move to the next shell
+		currentShell = nextShell
+	}
+
+	return result, nil
 }
 
 // GridDistance returns the minimum grid distance between cells in the two sets.
@@ -142,6 +179,33 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 	}
 
 	return minDistance, nil
+}
+
+// BoundaryCells returns the cells on the outer boundary of the set. A boundary
+// cell is one that has at least one neighboring cell that's not in the set.
+func (cs CellSet) BoundaryCells() (CellSet, error) {
+	// If the set has < 7 cells, return the set itself because there aren't enough
+	// cells to enclose one cell.
+	if len(cs) < 7 {
+		return cs, nil
+	}
+
+	boundaryCells := make(CellSet, len(cs))
+	for c := range cs {
+		neighbors, err := c.GridDisk(1)
+		if err != nil {
+			return nil, fmt.Errorf("error getting neighbors for cell %s: %w", c, err)
+		}
+
+		for _, n := range neighbors {
+			if !cs.Contains(n) {
+				boundaryCells.Add(c)
+				break
+			}
+		}
+	}
+
+	return boundaryCells, nil
 }
 
 // Resolution returns the resolution of the cells in the set. The function will
