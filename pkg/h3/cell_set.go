@@ -162,11 +162,30 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 		return 0, nil
 	}
 
-	// Check all pairs of cells to find the minimum distance.
+	// Get boundary cells of both sets
+	selfBoundaryCells, err := cs.BoundaryCells()
+	if err != nil {
+		return 0, fmt.Errorf("error getting boundary cells for this set: %w", err)
+	}
+
+	otherBoundaryCells, err := other.BoundaryCells()
+	if err != nil {
+		return 0, fmt.Errorf("error getting boundary cells for other set: %w", err)
+	}
+
+	// Check all pairs of boundary cells to find the minimum distance.
 	minDistance := -1
 
-	for c1 := range cs {
-		for c2 := range other {
+	// Choose the smaller set to iterate over
+	var a, b CellSet
+	if len(selfBoundaryCells) < len(otherBoundaryCells) {
+		a, b = selfBoundaryCells, otherBoundaryCells
+	} else {
+		a, b = otherBoundaryCells, selfBoundaryCells
+	}
+
+	for c1 := range a {
+		for c2 := range b {
 			d, err := c1.GridDistance(c2)
 			if err != nil {
 				return 0, fmt.Errorf("error computing grid distance between cells %s and %s: %w", c1, c2, err)
@@ -176,6 +195,11 @@ func (cs CellSet) GridDistance(other CellSet) (int, error) {
 				minDistance = d
 			}
 		}
+	}
+
+	// If no distance was found, return an error
+	if minDistance == -1 {
+		return 0, fmt.Errorf("no distance found between cell sets")
 	}
 
 	return minDistance, nil
