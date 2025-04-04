@@ -516,3 +516,82 @@ func BenchmarkCellSet_GridDistance(b *testing.B) {
 		}
 	}
 }
+
+func TestCellSet_Subtract(t *testing.T) {
+	type args struct {
+		other CellSet
+	}
+	tests := []struct {
+		name    string
+		cs      CellSet
+		args    args
+		want    CellSet
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			"empty",
+			CellSet{},
+			args{CellSet{}},
+			CellSet{},
+			assert.NoError,
+		},
+		{
+			"different resolutions",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x86283080fffffff: {}}},
+			nil,
+			assert.Error,
+		},
+		{
+			"single cell removed",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x87283082affffff: {}}},
+			CellSet{},
+			assert.NoError,
+		},
+		{
+			"single cell not removed",
+			CellSet{0x87283082affffff: {}},
+			args{CellSet{0x87283082bffffff: {}}},
+			CellSet{0x87283082affffff: {}},
+			assert.NoError,
+		},
+		{
+			"multiple cells, some removed",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}},
+			args{CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}}},
+			CellSet{0x87283082cffffff: {}},
+			assert.NoError,
+		},
+		{
+			"multiple cells, all removed",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}},
+			args{CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}}},
+			CellSet{},
+			assert.NoError,
+		},
+		{
+			"multiple cells, none removed",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}},
+			args{CellSet{0x87283082dffffff: {}}},
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}},
+			assert.NoError,
+		},
+		{
+			"multiple cells, empty removal set",
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}},
+			args{CellSet{}},
+			CellSet{0x87283082affffff: {}, 0x87283082bffffff: {}, 0x87283082cffffff: {}},
+			assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cs.Subtract(tt.args.other)
+			if !tt.wantErr(t, err, fmt.Sprintf("Subtract(%v)", tt.args.other)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "Subtract(%v)", tt.args.other)
+		})
+	}
+}
