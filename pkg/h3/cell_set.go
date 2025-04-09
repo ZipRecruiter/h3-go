@@ -327,3 +327,41 @@ func (cs CellSet) Subtract(other CellSet) (CellSet, error) {
 
 	return result, nil
 }
+
+// Parent returns a new cell set that contains the parent cells of the cells in
+// the given set. The resolution of the new set is the given resolution. It is an
+// error to call this function with a resolution greater than the set's
+// resolution, if the set is empty, or if the resolution is not consistent within
+// the set.
+func (cs CellSet) Parent(resolution int) (CellSet, error) {
+	// If the set is empty, return an error
+	if len(cs) == 0 {
+		return nil, fmt.Errorf("empty cell set")
+	}
+
+	setResolution, err := cs.Resolution()
+	if err != nil {
+		return nil, fmt.Errorf("cell set is not consistent resolution: %w", err)
+	}
+
+	// If the resolution is the same as the set's resolution, return the set itself
+	if resolution == setResolution {
+		return cs, nil
+	}
+
+	// Can't get children using the parent function
+	if resolution > setResolution {
+		return nil, fmt.Errorf("resolution %d is greater than current resolution %d", resolution, setResolution)
+	}
+
+	result := make(CellSet, len(cs))
+	for c := range cs {
+		parent, err := c.Parent(resolution)
+		if err != nil {
+			return nil, fmt.Errorf("error getting parent for cell %s: %w", c, err)
+		}
+		result.Add(parent)
+	}
+
+	return result, nil
+}
