@@ -595,3 +595,68 @@ func TestCellSet_Subtract(t *testing.T) {
 		})
 	}
 }
+
+func TestCellSet_Parent(t *testing.T) {
+	type args struct {
+		resolution int
+	}
+	tests := []struct {
+		name    string
+		cs      CellSet
+		args    args
+		want    CellSet
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			"empty",
+			CellSet{},
+			args{0},
+			nil,
+			assert.Error,
+		},
+		{
+			"single cell, same resolution",
+			CellSet{0x87283082affffff: {}},
+			args{7},
+			CellSet{0x87283082affffff: {}},
+			assert.NoError,
+		},
+		{
+			"single cell, different resolution",
+			CellSet{0x87283082affffff: {}},
+			args{5},
+			CellSet{0x85283083fffffff: {}},
+			assert.NoError,
+		},
+		{
+			"single cell, greater resolution",
+			CellSet{0x87283082affffff: {}},
+			args{8},
+			nil,
+			assert.Error,
+		},
+		{
+			"single cell, invalid resolution",
+			CellSet{0x87283082affffff: {}},
+			args{-1},
+			nil,
+			assert.Error,
+		},
+		{
+			"multiple cells, different resolution",
+			CellSet{0x872830876ffffff: {}, 0x87283082bffffff: {}, 0x87283082affffff: {}},
+			args{5},
+			CellSet{0x85283083fffffff: {}, 0x85283087fffffff: {}},
+			assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cs.Parent(tt.args.resolution)
+			if !tt.wantErr(t, err, fmt.Sprintf("Parent(%v)", tt.args.resolution)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "Parent(%v)", tt.args.resolution)
+		})
+	}
+}
