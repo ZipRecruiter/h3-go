@@ -833,3 +833,51 @@ func (c coordIJK) Distance(other coordIJK) int {
 	}
 	return max(max(absDiff.i, absDiff.j), absDiff.k)
 }
+
+// hex2dToGeo converts hex2d coordinates on an icosahedral face back to
+// geographic coordinates. This is the reverse of geoToHex2d.
+//
+// The substrate parameter should be true when working with finer-than-cell
+// resolution grids (used internally by some H3 operations).
+//
+// Ported from the H3 C reference (_hex2dToGeo in faceijk.c).
+func hex2dToGeo(v vec2d, face int, res int, substrate bool) LatLng {
+	// calculate (r, theta) in hex2d
+	r := v.Mag()
+
+	if r < EPSILON {
+		return faceCenterGeo[face]
+	}
+
+	theta := math.Atan2(v.y, v.x)
+
+	// scale for current resolution length u
+	for i := 0; i < res; i++ {
+		r *= M_RSQRT7
+	}
+
+	// scale accordingly if this is a substrate grid
+	if substrate {
+		r *= M_ONETHIRD
+		if isResolutionClassIII(res) {
+			r *= M_RSQRT7
+		}
+	}
+
+	r *= RES0_U_GNOMONIC
+
+	// perform inverse gnomonic scaling of r
+	r = math.Atan(r)
+
+	// adjust theta for Class III
+	// if a substrate grid, then it's already been adjusted for Class III
+	if !substrate && isResolutionClassIII(res) {
+		theta = posAngleRads(theta + M_AP7_ROT_RADS)
+	}
+
+	// find theta as an azimuth
+	theta = posAngleRads(faceAxesAzRadsCII[face][0] - theta)
+
+	// now find the point at (r,theta) from the face center
+	return faceCenterGeo[face].geoAzimuthDistanceRads(theta, r)
+}
