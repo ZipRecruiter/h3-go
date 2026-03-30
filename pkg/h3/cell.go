@@ -633,3 +633,84 @@ func rotate60cw(digit Direction) Direction {
 		return digit
 	}
 }
+
+// cellToFaceIjk converts a Cell to its FaceIJK address, handling face
+// overage for cells near icosahedral face boundaries.
+//
+// Ported from the H3 C reference (_h3ToFaceIjk in h3Index.c).
+func cellToFaceIjk(c Cell) (faceIJK, error) {
+	bc := c.BaseCell()
+	if bc < 0 || bc >= NUM_BASE_CELLS {
+		return faceIJK{}, ErrInvalidArgument
+	}
+
+	// adjust for the pentagonal missing sequence; all of sub-sequence 5
+	// needs to be adjusted (and some of sub-sequence 4 below)
+	h := c
+	if bc.isPentagon() && h.leadingNonZeroDigit() == IK_AXES_DIGIT {
+		h = h.rotate60cw()
+	}
+
+	// start with the "home" face and ijk+ coordinates for the base cell
+	fijk := baseCellToFaceIjk(bc)
+
+	if !h.toFaceIjkOverage(&fijk) {
+		return fijk, nil // no overage possible
+	}
+
+	// if we're here we have the potential for an "overage"
+	origIJK := fijk.coord
+
+	res := h.Resolution()
+	if isResolutionClassIII(res) {
+		// Class III: drop into the next finer Class II grid
+		fijk.coord = fijk.coord.downAp7r()
+		res++
+	}
+
+	// adjust for overage if needed
+	// a pentagon base cell with a leading 4 digit requires special handling
+	pentLeading4 := bc.isPentagon() && h.leadingNonZeroDigit() == I_AXES_DIGIT
+	if adjustOverageClassII(&fijk, res, pentLeading4, false) != NO_OVERAGE {
+		// if the base cell is a pentagon we have the potential for secondary
+		// overages
+		if bc.isPentagon() {
+			for adjustOverageClassII(&fijk, res, false, false) != NO_OVERAGE {
+				continue
+			}
+		}
+
+		if res != h.Resolution() {
+			fijk.coord = fijk.coord.upAp7r()
+		}
+	} else if res != h.Resolution() {
+		fijk.coord = origIJK
+	}
+
+	return fijk, nil
+}
+
+// toFaceIjkOverage is a wrapper around toFaceIjkWithInitializedFijk that
+// returns just the possibleOverage bool (matching the C API shape).
+func (c Cell) toFaceIjkOverage(fijk *faceIJK) bool {
+	result, possibleOverage := c.toFaceIjkWithInitializedFijk(*fijk)
+	*fijk = result
+	return possibleOverage
+}
+
+// ToLatLng returns the center of the cell as geographic coordinates.
+// The returned LatLng uses radians (consistent with other LatLng values in
+// this package). Returns an error if the cell is invalid.
+func (c Cell) ToLatLng() (LatLng, error) {
+	if !c.Valid() {
+		return LatLng{}, ErrInvalidArgument
+	}
+
+	fijk, err := cellToFaceIjk(c)
+	if err != nil {
+		return LatLng{}, err
+	}
+
+	v := ijkToHex2d(fijk.coord)
+	return hex2dToGeo(v, fijk.face, c.Resolution(), false), nil
+}

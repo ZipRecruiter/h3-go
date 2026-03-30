@@ -646,6 +646,145 @@ func TestCell_GridDistance(t *testing.T) {
 	}
 }
 
+func TestCell_ToLatLng(t *testing.T) {
+	// Ground truth values from h3-python (uber/h3 C library)
+	tests := []struct {
+		name    string
+		cell    string
+		wantLat float64 // degrees
+		wantLng float64 // degrees
+	}{
+		{name: "SF res 5", cell: "85283473fffffff", wantLat: 37.345793375368480, wantLng: -121.976375972551196},
+		{name: "LA cell 1 res 7", cell: "8729a19a0ffffff", wantLat: 33.955170370550128, wantLng: -118.460825162371194},
+		{name: "LA cell 2 res 7", cell: "8729a1811ffffff", wantLat: 34.113888958192490, wantLng: -118.561069531613768},
+		{name: "Bay Area res 7", cell: "872830829ffffff", wantLat: 37.782796841289489, wantLng: -122.443404411195274},
+		{name: "NYC res 7", cell: "872a1072bffffff", wantLat: 40.685283975232352, wantLng: -74.030218323463984},
+		{name: "London res 7", cell: "87195da49ffffff", wantLat: 51.509714188032547, wantLng: -0.142519940884726},
+		{name: "Tokyo res 7", cell: "872f5a309ffffff", wantLat: 35.758394212166600, wantLng: 139.716969424166905},
+		{name: "Near North Pole res 2", cell: "82001ffffffffff", wantLat: 81.029276156855076, wantLng: 50.504634769541724},
+		{name: "origin res 1", cell: "81757ffffffffff", wantLat: 2.097907640587099, wantLng: 0.499473284285551},
+		{name: "origin res 2", cell: "82754ffffffffff", wantLat: -0.459695642341287, wantLng: 0.534167862982357},
+		{name: "origin res 15", cell: "8f754e64992d6d8", wantLat: 0.000002077039499, wantLng: 0.000002363229518},
+		{name: "base cell 0 res 0", cell: "8021fffffffffff", wantLat: 46.041894318837713, wantLng: 71.527903299099236},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := mustCellFromString(tt.cell)
+			got, err := c.ToLatLng()
+			assert.NoError(t, err)
+			gotLat := rad2deg(got.Latitude())
+			gotLng := rad2deg(got.Longitude())
+			// Tolerance: 1e-7 degrees ≈ 1cm
+			assert.InDelta(t, tt.wantLat, gotLat, 1e-7, "latitude")
+			assert.InDelta(t, tt.wantLng, gotLng, 1e-7, "longitude")
+		})
+	}
+}
+
+func TestCell_ToLatLng_pentagons(t *testing.T) {
+	tests := []struct {
+		name    string
+		cell    string
+		wantLat float64
+		wantLng float64
+	}{
+		{name: "pentagon bc=4", cell: "8009fffffffffff", wantLat: 64.700000127934871, wantLng: 10.536199075467669},
+		{name: "pentagon bc=14", cell: "801dfffffffffff", wantLat: 50.103201482241332, wantLng: -143.478490015025159},
+		{name: "pentagon bc=24", cell: "8031fffffffffff", wantLat: 39.100000033975917, wantLng: 122.300000407787039},
+		{name: "pentagon bc=38", cell: "804dfffffffffff", wantLat: 23.717925271222960, wantLng: -67.132326366435663},
+		{name: "pentagon bc=49", cell: "8063fffffffffff", wantLat: 10.447345187511031, wantLng: 58.157705839572586},
+		{name: "pentagon bc=58", cell: "8075fffffffffff", wantLat: 2.300882111626741, wantLng: -5.245390296777326},
+		{name: "pentagon bc=63", cell: "807ffffffffffff", wantLat: -2.300882111626741, wantLng: 174.754609703222684},
+		{name: "pentagon bc=72", cell: "8091fffffffffff", wantLat: -10.447345187511036, wantLng: -121.842294160427400},
+		{name: "pentagon bc=83", cell: "80a7fffffffffff", wantLat: -23.717925271222960, wantLng: 112.867673633564351},
+		{name: "pentagon bc=97", cell: "80c3fffffffffff", wantLat: -39.100000033975910, wantLng: -57.699999592212968},
+		{name: "pentagon bc=107", cell: "80d7fffffffffff", wantLat: -50.103201482241332, wantLng: 36.521509984974834},
+		{name: "pentagon bc=117", cell: "80ebfffffffffff", wantLat: -64.700000127934885, wantLng: -169.463800924532393},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := mustCellFromString(tt.cell)
+			assert.True(t, c.isPentagon(), "expected pentagon")
+			got, err := c.ToLatLng()
+			assert.NoError(t, err)
+			gotLat := rad2deg(got.Latitude())
+			gotLng := rad2deg(got.Longitude())
+			assert.InDelta(t, tt.wantLat, gotLat, 1e-7, "latitude")
+			assert.InDelta(t, tt.wantLng, gotLng, 1e-7, "longitude")
+		})
+	}
+}
+
+func TestCell_ToLatLng_allBaseCells(t *testing.T) {
+	for i := 0; i < NUM_BASE_CELLS; i++ {
+		c := H3_INIT.setMode(H3_CELL_MODE).setBaseCell(baseCell(i))
+		if !c.Valid() {
+			continue
+		}
+		t.Run(fmt.Sprintf("bc_%d", i), func(t *testing.T) {
+			ll, err := c.ToLatLng()
+			assert.NoError(t, err, "ToLatLng should not error for valid base cell %d", i)
+
+			// Round-trip: the cell containing ll at res 0 should be c
+			roundTrip, err := NewCellFromLatLng(ll, 0)
+			assert.NoError(t, err)
+			assert.Equal(t, c, roundTrip, "round-trip failed for base cell %d", i)
+		})
+	}
+}
+
+func TestCell_ToLatLng_roundTrip(t *testing.T) {
+	testPoints := []struct{ lat, lng float64 }{
+		{37.7749, -122.4194},
+		{34.0522, -118.2437},
+		{40.7128, -74.0060},
+		{51.5074, -0.1278},
+		{35.6762, 139.6503},
+		{0.0, 0.0},
+		{89.9, 1.0},
+		{-89.9, 1.0},
+		{0.0, 179.99},
+		{0.0, -179.99},
+		{-33.8688, 151.2093},
+		{55.7558, 37.6173},
+		{-22.9068, -43.1729},
+	}
+	for _, tp := range testPoints {
+		for _, res := range []int{0, 1, 3, 5, 7, 10, 12, 15} {
+			name := fmt.Sprintf("lat%.1f_lng%.1f_res%d", tp.lat, tp.lng, res)
+			t.Run(name, func(t *testing.T) {
+				ll := NewLatLng(tp.lat, tp.lng)
+				cell, err := NewCellFromLatLng(ll, res)
+				assert.NoError(t, err)
+
+				center, err := cell.ToLatLng()
+				assert.NoError(t, err)
+
+				cell2, err := NewCellFromLatLng(center, res)
+				assert.NoError(t, err)
+				assert.Equal(t, cell, cell2, "round-trip cell mismatch")
+			})
+		}
+	}
+}
+
+func TestCell_ToLatLng_invalidCells(t *testing.T) {
+	tests := []struct {
+		name string
+		cell Cell
+	}{
+		{name: "zero cell", cell: Cell(0)},
+		{name: "wrong mode", cell: H3_INIT.setMode(2)},
+		{name: "reserved bits set", cell: H3_INIT.setMode(H3_CELL_MODE).setReservedBits(1)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.cell.ToLatLng()
+			assert.Error(t, err, "expected error for invalid cell")
+		})
+	}
+}
+
 func TestCell_Parent(t *testing.T) {
 	type args struct {
 		res int
