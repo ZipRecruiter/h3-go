@@ -167,7 +167,7 @@ func GetNumCells(res int) (uint64, error) {
 	return uint64(2 + 120*ipow(7, res)), nil
 }
 
-// contrainLat makes sure latitudes are in the proper bounds
+// constrainLat makes sure latitudes are in the proper bounds
 func constrainLat(lat float64) float64 {
 	for lat > M_PI_2 {
 		lat = lat - math.Pi
